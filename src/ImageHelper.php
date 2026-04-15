@@ -874,8 +874,13 @@ class ImageHelper
          */
         $destination_path = \apply_filters('timber/image/new_path', $destination_path);
 
+        if (!\file_exists($source_path)) {
+            Helper::error_log('Image operation: source file does not exist: ' . $source_path);
+            return $src;
+        }
+
         // if already exists...
-        if (\file_exists($source_path) && \file_exists($destination_path)) {
+        if (\file_exists($destination_path)) {
             if ($force || \filemtime($source_path) > \filemtime($destination_path)) {
                 // Force operation - warning: will regenerate the image on every pageload, use for testing purposes only!
                 \unlink($destination_path);
@@ -885,15 +890,26 @@ class ImageHelper
             }
         }
         // otherwise generate result file
-        if ($op->run($source_path, $destination_path)) {
-            if ($op::class === Operation\Resize::class && $external) {
-                $new_url = \strtolower((string) $new_url);
+        try {
+            if ($op->run($source_path, $destination_path)) {
+                if ($op::class === Operation\Resize::class && $external) {
+                    $new_url = \strtolower((string) $new_url);
+                }
+                return $new_url;
             }
-            return $new_url;
-        } else {
-            // in case of error, we return source file itself
-            return $src;
+        } catch (\Throwable $e) {
+            if (\defined('WP_DEBUG') && WP_DEBUG) {
+                throw $e;
+            }
+            Helper::error_log(\sprintf(
+                'Image operation %s failed for %s: %s',
+                $op::class,
+                $source_path,
+                $e->getMessage()
+            ));
         }
+        // in case of error, we return source file itself
+        return $src;
     }
 
     //-- the below methods are just used for
