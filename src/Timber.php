@@ -1490,7 +1490,6 @@ class Timber
                     'timber/compile/data'
                 );
             }
-
             $output = $loader->render($file, $data, $expires, $cache_mode);
         } else {
             if (\is_array($filenames)) {
@@ -1536,6 +1535,60 @@ class Timber
         \do_action_deprecated('timber_compile_done', [], '2.0.0', 'timber/compile/done');
 
         return $output;
+    }
+
+    /**
+     * Compiles a Twig block from a Twig file.
+     *
+     * Passes data to a Twig file and returns the output of a specific block.
+     *
+     * @api
+     * @param string         $block_name     The name of the block to render.
+     * @param array|string   $filenames      Name or full path of the Twig file to render. If this is an array of file
+     *                                       names or paths, Timber will render the first file that exists.
+     * @param array          $data           Optional. An array of data to use in Twig template.
+     * @param string|array|null $caller      Optional. A value produced by a `LocationManager` method to control
+     *                                       template lookup. Pass either `LocationManager::get_calling_script_dir()`
+     *                                       (string path) or `LocationManager::get_locations()` (array of search
+     *                                       locations). When `null`, Timber will default to
+     *                                       `LocationManager::get_calling_script_dir(1)`.
+     * @param bool|int|array $expires        Optional. In seconds. Use false to disable cache altogether. When passed an
+     *                                       array, the first value is used for non-logged in visitors, the second for users.
+     *                                       Default false.
+     * @param string         $cache_mode     Optional. Any of the cache mode constants defined in Timber\Loader.
+     * @return bool|string                   The rendered block output or false on failure.
+     *
+     * @example
+     * ```php
+     * $context = Timber::context();
+     *
+     * $output = Timber::compile_twig_block( 'content', 'index.twig', $context );
+     * ```
+     */
+    public static function compile_twig_block($block_name, $filenames, $data = [], $caller = null, $expires = false, $cache_mode = Loader::CACHE_USE_DEFAULT)
+    {
+        if (!\defined('TIMBER_LOADED')) {
+            self::init();
+        }
+
+        if ($caller === null) {
+            $caller = LocationManager::get_calling_script_dir(1);
+        }
+        $block_loader = new TwigBlockLoader($caller, $block_name);
+        $file = $block_loader->choose_template($filenames);
+
+        if ($file !== false) {
+            if (\is_null($data)) {
+                $data = [];
+            }
+            return $block_loader->render($file, $data, $expires, $cache_mode);
+        } else {
+            if (\is_array($filenames)) {
+                $filenames = \implode(", ", $filenames);
+            }
+            Helper::error_log('Error loading your template files: ' . $filenames . '. Make sure one of these files exists.');
+            return false;
+        }
     }
 
     /**
@@ -1632,6 +1685,38 @@ class Timber
     {
         $output = self::compile($filenames, $data, $expires, $cache_mode, true);
         echo $output;
+    }
+
+    /**
+     * Renders a Twig block from a Twig file.
+     *
+     * Passes data to a Twig file and echoes the output of a specific block.
+     *
+     * @api
+     * @param string         $block_name     The name of the block to render.
+     * @param array|string   $filenames      Name or full path of the Twig file to render. If this is an array of file
+     *                                       names or paths, Timber will render the first file that exists.
+     * @param array          $data           Optional. An array of data to use in Twig template.
+     * @param string|array|null $caller      Optional. A value produced by a `LocationManager` method to control
+     *                                       template lookup. Pass either `LocationManager::get_calling_script_dir()`
+     *                                       (string path) or `LocationManager::get_locations()` (array of search
+     *                                       locations). When `null`, Timber will default to
+     *                                       `LocationManager::get_calling_script_dir(1)`.
+     * @param bool|int|array $expires        Optional. In seconds. Use false to disable cache altogether. When passed an
+     *                                       array, the first value is used for non-logged in visitors, the second for users.
+     *                                       Default false.
+     * @param string         $cache_mode     Optional. Any of the cache mode constants defined in Timber\Loader.
+     *
+     * @example
+     * ```php
+     * $context = Timber::context();
+     *
+     * Timber::render_twig_block( 'success', 'toasts.twig', $context );
+     * ```
+     */
+    public static function render_twig_block(string $block_name, $filenames, array $data = [], $caller = null, $expires = false, $cache_mode = Loader::CACHE_USE_DEFAULT)
+    {
+        echo self::compile_twig_block($block_name, $filenames, $data, $caller, $expires, $cache_mode);
     }
 
     /**
