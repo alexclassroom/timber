@@ -110,7 +110,6 @@ Or, because you already use Composer to handle dependencies, you can register yo
 
 Then, you would use that namespace for your `BlogPost` class.
 
-
 **src/BlogPost.php**
 
 ```php
