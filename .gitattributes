@@ -3,6 +3,7 @@
 /.github export-ignore
 /bin export-ignore
 /docs export-ignore
+/phpstan export-ignore
 /tests export-ignore
 /.coveralls.yml export-ignore
 /.editorconfig export-ignore
@@ -15,8 +16,9 @@
 /grumphp.yml export-ignore
 /rector.php export-ignore
 /phpcs.xml export-ignore
-/phpstan.neon export-ignore
+/phpstan.neon.dist export-ignore
 /phpunit-nocover.xml export-ignore
 /phpunit.xml  export-ignore
 /.release-please-manifest.json export-ignore
 /release-please-config.json export-ignore
+/typos.toml export-ignore
